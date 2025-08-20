@@ -1,0 +1,75 @@
+name: Merge stable_develop tag into target branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: "Target branch to merge stable_develop tag into"
+        required: true
+        type: string
+
+jobs:
+  merge:
+    runs-on: ubuntu-24.04 
+    permissions:
+      contents: write
+      actions: read
+      checks: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Git identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Check if target branch exists remotely
+        run: |
+          branch_name="${{ github.event.inputs.target_branch }}"
+          echo "Checking if branch '$branch_name' exists on remote..."
+          if ! git ls-remote --heads origin "$branch_name" | grep -q "$branch_name$"; then
+            echo "::error::Branch '$branch_name' does not exist on remote."
+            exit 1
+          fi
+          echo "Branch '$branch_name' exists."
+
+      - name: Prepare target branch
+        run: |
+          branch_name="${{ github.event.inputs.target_branch }}"
+          echo "Checking out target branch..."
+          git checkout "$branch_name"
+          echo "Pulling latest changes..."
+          git pull origin "$branch_name"
+
+      - name: Fetch stable_develop tag
+        run: |
+          echo "Fetching develop and the stable_develop tag..."
+          git fetch --tags --force
+
+      - name: Detect merge conflicts (dry run)
+        run: |
+          branch_name="${{ github.event.inputs.target_branch }}"
+          echo "Checking for merge conflicts between stable_develop tag and $branch_name..."
+
+          base=$(git merge-base $branch_name stable_develop)
+          if ! git merge-tree $base $branch_name stable_develop | grep -q '<<<<<<<'; then
+            echo "No merge conflicts detected."
+          else
+            echo "::error::Merge conflict detected between stable_develop tag and $branch_name."
+            exit 1
+          fi
+
+      - name: Merge stable_develop tag into target branch
+        run: |
+          set -e
+          branch_name="${{ github.event.inputs.target_branch }}"
+
+          echo "Merging stable_develop tag into $branch_name..."
+          git merge stable_develop -m "Merge stable_develop tag"
+
+          echo "Pushing changes..."
+          git push origin "$branch_name"
