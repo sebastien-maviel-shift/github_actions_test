@@ -18,9 +18,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          fetch-depth: 500
           ref: ${{ github.event.inputs.target_branch }}
-          single-branch: true   # fetch only the target branch
           fetch-tags: false   # don't pull every tag to speed up this step
 
       - name: Set up Git identity
