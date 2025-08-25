@@ -15,22 +15,11 @@ jobs:
       contents: write
 
     steps:
-      - name: Check if target branch exists remotely
-        run: |
-          branch_name="${{ github.event.inputs.target_branch }}"
-          echo "Checking if branch '$branch_name' exists on remote..."
-          if ! git ls-remote --heads origin "$branch_name" | grep -q "$branch_name$"; then
-            echo "::error::Branch '$branch_name' does not exist on remote."
-            exit 1
-          fi
-          echo "Branch '$branch_name' exists."
-
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: ${{ github.event.inputs.target_branch }}
-          fetch-tags: false   # don't pull every tag to boost the repo fetching step
 
       - name: Set up Git identity
         run: |
