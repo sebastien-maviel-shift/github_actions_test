@@ -20,6 +20,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.inputs.target_branch }}
+          fetch-tags: false   # don't pull every tag to speed up this step
 
       - name: Set up Git identity
         run: |
