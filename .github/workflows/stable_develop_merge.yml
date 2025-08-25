@@ -35,7 +35,7 @@ jobs:
       - name: Fetch stable_develop tag
         run: |
           echo "Fetching develop and the stable_develop tag..."
-          git fetch --tags --force
+          git fetch origin refs/tags/stable_develop:refs/tags/stable_develop
 
       - name: Detect merge conflicts (dry run)
         run: |
