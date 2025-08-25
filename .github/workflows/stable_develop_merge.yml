@@ -27,15 +27,25 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-      - name: Fetch full history of target branch
+      - name: Ensure full history (only if shallow)
         run: |
           branch_name="${{ github.event.inputs.target_branch }}"
-          git fetch --unshallow origin "$branch_name"
+          if [ -f .git/shallow ]; then
+            echo "Repository is shallow. Fetching full history for $branch_name..."
+            git fetch --unshallow origin "$branch_name"
+          else
+            echo "Repository already has full history, skipping unshallow."
+          fi
 
-      - name: Fetch stable_develop tag
+      - name: fetch stable_develop tags
         run: |
-          echo "Fetching develop and the stable_develop tag..."
-          git fetch origin refs/tags/stable_develop:refs/tags/stable_develop
+          if git ls-remote --tags origin | grep -q "refs/tags/stable_develop$"; then
+            echo "Fetching develop and the stable_develop tag..."
+            git fetch origin refs/tags/stable_develop:refs/tags/stable_develop
+          else
+            echo "::error::stable_develop tag does not exist on origin."
+            exit 1
+          fi
 
       - name: Detect merge conflicts (dry run)
         run: |
